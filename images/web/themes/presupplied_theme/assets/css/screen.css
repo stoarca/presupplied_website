@@ -476,15 +476,6 @@ production stylesheet in assets/built/screen.css
     height: 18px;
 }
 
-.gh-head-actions {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 24px;
-    list-style: none;
-    text-align: right;
-}
-
 .gh-head-members {
     display: flex;
     gap: 20px;
@@ -548,16 +539,6 @@ production stylesheet in assets/built/screen.css
     margin-right: 8px;
 }
 
-.gh-head-actions .gh-search {
-    margin-right: -4px;
-}
-
-@media (max-width: 767px) {
-    .gh-head-actions .gh-search {
-        display: none;
-    }
-}
-
 @media (min-width: 768px) {
     .gh-head-brand .gh-search {
         display: none;
@@ -594,7 +575,7 @@ production stylesheet in assets/built/screen.css
 
 .has-cover .gh-burger::before,
 .has-cover .gh-burger::after {
-    background-color: #fff;
+    background-color: var(--color-header);
 }
 
 .gh-burger::before {
@@ -651,8 +632,7 @@ production stylesheet in assets/built/screen.css
         display: block;
     }
 
-    #gh-head .gh-head-menu,
-    #gh-head .gh-head-actions {
+    #gh-head .gh-head-menu {
         position: fixed;
         justify-content: center;
         visibility: hidden;
@@ -704,13 +684,11 @@ production stylesheet in assets/built/screen.css
         -webkit-overflow-scrolling: touch;
     }
 
-    .gh-head-open.has-cover #gh-head,
-    .gh-head-open.has-cover #gh-head .gh-head-actions {
+    .gh-head-open.has-cover #gh-head {
         background-color: var(--ghost-accent-color);
     }
 
-    .gh-head-open #gh-head .gh-head-menu,
-    .gh-head-open #gh-head .gh-head-actions {
+    .gh-head-open #gh-head .gh-head-menu {
         position: static;
         visibility: visible;
         opacity: 1;
@@ -725,19 +703,6 @@ production stylesheet in assets/built/screen.css
         opacity: 1;
         transition: transform 0.2s, opacity 0.2s;
         transform: translateY(0);
-    }
-
-    .gh-head-open #gh-head .gh-head-actions {
-        position: sticky;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        display: inline-flex;
-        flex-direction: column;
-        gap: 12px;
-        align-items: center;
-        padding: max(4vmin, 20px) 0 max(4vmin, 28px);
-        background-color: #fff;
     }
 
     .gh-head-open #gh-head :is(.gh-head-button, .gh-head-link) {
@@ -2238,8 +2203,7 @@ html.dark-mode .footer-cta-title {
 }
 
 @media (max-width: 767px) {
-    html.dark-mode .gh-head-open:not(.has-cover) #gh-head,
-    html.dark-mode .gh-head-open:not(.has-cover) #gh-head .gh-head-actions {
+    html.dark-mode .gh-head-open:not(.has-cover) #gh-head {
         background: var(--color-darkmode);
     }
 }
@@ -2430,8 +2394,7 @@ html.dark-mode .footer-cta-title {
     }
 
     @media (max-width: 767px) {
-        html.auto-color .gh-head-open:not(.has-cover) #gh-head,
-        html.auto-color .gh-head-open:not(.has-cover) #gh-head .gh-head-actions {
+        html.auto-color .gh-head-open:not(.has-cover) #gh-head {
             background: var(--color-darkmode);
         }
     }

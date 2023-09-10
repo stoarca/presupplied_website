@@ -47,7 +47,7 @@ let config = {
         '/data/presupplied_website/ghost/content/public:/var/lib/ghost/content/public',
         '/data/presupplied_website/ghost/content/settings:/var/lib/ghost/content/settings',
 
-        `${path.join(__dirname, './images/web/presupplied_theme')}:/var/lib/ghost/content/themes/presupplied_theme`,
+        `${path.join(__dirname, './images/web/themes')}:/var/lib/ghost/content/themes`,
       ],
       ports: [
         '2368:2368',
