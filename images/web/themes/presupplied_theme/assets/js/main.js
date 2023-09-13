@@ -65,8 +65,8 @@ function cover() {
       MomentCRM('on', 'userUpdate', f);
       MomentCRM('update', {
         email: coverForm.getElementsByClassName('auth-email')[0].value,
-        document.activeElement.blur();
       });
+      document.activeElement.blur();
     });
   }
 }

@@ -38,17 +38,10 @@ let config = {
       },
       restart: 'always',
       volumes: [
-        '/data/presupplied_website/ghost/content/apps:/var/lib/ghost/content/apps',
-        '/data/presupplied_website/ghost/content/data:/var/lib/ghost/content/data',
-        '/data/presupplied_website/ghost/content/files:/var/lib/ghost/content/files',
-        '/data/presupplied_website/ghost/content/images:/var/lib/ghost/content/images',
-        '/data/presupplied_website/ghost/content/logs:/var/lib/ghost/content/logs',
-        '/data/presupplied_website/ghost/content/media:/var/lib/ghost/content/media',
-        '/data/presupplied_website/ghost/content/public:/var/lib/ghost/content/public',
-        '/data/presupplied_website/ghost/content/settings:/var/lib/ghost/content/settings',
-
-        `${path.join(__dirname, './images/web/themes')}:/var/lib/ghost/content/themes`,
-      ],
+        '/data/presupplied_website/ghost/content:/var/lib/ghost/content',
+      ].concat(DEV ? [
+        `${path.join(__dirname, './images/web/themes')}:/themes`,
+      ] : []),
       ports: [
         '2368:2368',
       ],
