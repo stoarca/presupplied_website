@@ -14,11 +14,13 @@ if (!['dev', 'prod'].includes(MODE)) {
 let DEV = MODE === 'dev';
 let PROD = MODE === 'prod';
 
-let env = {
-  MYSQL_GHOST_USER_PASSWORD: 'example',
-  MYSQL_ROOT_PASSWORD: 'example',
-};
-env = new Proxy(env, {
+let secrets;
+if (DEV) {
+  secrets = require('./secrets.dev.json');
+} else {
+  secrets = require('./secrets.prod.json');
+}
+secrets = new Proxy(secrets, {
   get(target, prop) {
     if (prop in target) {
       return target[prop];
@@ -50,7 +52,7 @@ let config = {
         database__client: 'mysql',
         database__connection__host: 'mysql',
         database__connection__user: 'ghostusr',
-        database__connection__password: env.MYSQL_GHOST_USER_PASSWORD,
+        database__connection__password: secrets.MYSQL_GHOST_USER_PASSWORD,
         database__connection__database: 'ghost',
         url: DEV ? 'http://wwwlocal.presupplied.com' : 'https://presupplied.com',
         NODE_ENV: DEV ? 'development' : 'production',
@@ -63,10 +65,10 @@ let config = {
        '/data/presupplied_website/mysql:/var/lib/mysql',
       ],
       environment: {
-        MYSQL_ROOT_PASSWORD: env.MYSQL_ROOT_PASSWORD,
+        MYSQL_ROOT_PASSWORD: secrets.MYSQL_ROOT_PASSWORD,
         MYSQL_DATABASE: 'ghost',
         MYSQL_USER: 'ghostusr',
-        MYSQL_PASSWORD: env.MYSQL_GHOST_USER_PASSWORD,
+        MYSQL_PASSWORD: secrets.MYSQL_GHOST_USER_PASSWORD,
       },
     },
     nginx: {
