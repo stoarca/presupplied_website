@@ -33,14 +33,14 @@ secrets = new Proxy(secrets, {
 let config = {
   version: '3.1',
   services: {
-    ghost: {
+    web: {
       build: {
         dockerfile: path.join(__dirname, 'images/web/Dockerfile'),
         context: path.join(__dirname, 'images/web'),
       },
       restart: 'always',
       volumes: [
-        '/data/presupplied_website/ghost/content:/var/lib/ghost/content',
+        '/data/presupplied_website/web/ghost/content:/var/lib/ghost/content',
       ].concat(DEV ? [
         `${path.join(__dirname, './images/web/themes')}:/themes`,
       ] : []),
@@ -75,6 +75,9 @@ let config = {
       build: {
         dockerfile: path.join(__dirname, 'images/nginx/Dockerfile'),
         context: path.join(__dirname, 'images/nginx'),
+        labels: {
+          'com.presupplied.nginx': '',
+        },
       },
       restart: 'always',
       ports: [
@@ -87,6 +90,28 @@ let config = {
         '/etc/letsencrypt:/etc/letsencrypt:ro',
         '/tmp/letsencrypt/www:/tmp/letsencrypt/www',
       ]
+    },
+    autoletsencrypt: {
+      build: {
+        dockerfile: path.join(__dirname, 'images/autoletsencrypt/Dockerfile'),
+        context: path.join(__dirname, 'images/autoletsencrypt'),
+      },
+      restart: 'unless-stopped',
+      links: ['nginx'],
+      volumes: [
+        '/var/log/letsencrypt:/var/log/letsencrypt',
+        '/var/run/docker.sock:/var/run/docker.sock',
+        '/var/lib/letsencrypt:/var/lib/letsencrypt',
+        '/tmp/letsencrypt/www:/tmp/letsencrypt/www',
+        '/etc/letsencrypt:/etc/letsencrypt',
+      ],
+      environment: {
+        EMAIL: 't.sergiu@gmail.com',
+        SERVER_CONTAINER_LABEL: 'com.presupplied.nginx=',
+        WEBROOT_PATH: '/tmp/letsencrypt/www',
+        DOMAINS: 'presupplied.com www.presupplied.com app.presupplied.com',
+        CHECK_FREQ: '7',
+      },
     },
   }
 };
