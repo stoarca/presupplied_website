@@ -30,6 +30,10 @@ secrets = new Proxy(secrets, {
   }
 });
 
+let host = DEV ? 'wwwlocal.presupplied.com' : 'presupplied.com';
+let scheme = DEV ? 'http://' : 'https://';
+let webUrl = scheme + host;
+
 let config = {
   version: '3.1',
   services: {
@@ -38,15 +42,22 @@ let config = {
         dockerfile: path.join(__dirname, 'images/web/Dockerfile'),
         context: path.join(__dirname, 'images/web'),
       },
+      labels: [
+        'traefik.enable=true',
+        `traefik.http.routers.webrouter.rule=Host("${host}")`,
+        'traefik.http.services.webservice.loadbalancer.server.port=2368'
+      ].concat(DEV ? [
+        'traefik.http.routers.webrouter.entrypoints=web',
+      ] : [
+        'traefik.http.routers.webrouter.entrypoints=websecure',
+        'traefik.http.routers.webrouter.tls.certresolver=myresolver',
+      ]),
       restart: 'always',
       volumes: [
         '/data/presupplied_website/web/ghost/content:/var/lib/ghost/content',
       ].concat(DEV ? [
         `${path.join(__dirname, './images/web/themes')}:/themes`,
       ] : []),
-      ports: [
-        '2368:2368',
-      ],
       environment: {
         // see https://ghost.org/docs/config/#configuration-options
         database__client: 'mysql',
@@ -54,7 +65,7 @@ let config = {
         database__connection__user: 'ghostusr',
         database__connection__password: secrets.MYSQL_GHOST_USER_PASSWORD,
         database__connection__database: 'ghost',
-        url: DEV ? 'http://wwwlocal.presupplied.com' : 'https://presupplied.com',
+        url: webUrl,
         NODE_ENV: DEV ? 'development' : 'production',
       }
     },
@@ -71,47 +82,31 @@ let config = {
         MYSQL_PASSWORD: secrets.MYSQL_GHOST_USER_PASSWORD,
       },
     },
-    nginx: {
-      build: {
-        dockerfile: path.join(__dirname, 'images/nginx/Dockerfile'),
-        context: path.join(__dirname, 'images/nginx'),
-        labels: {
-          'com.presupplied.nginx': '',
-        },
-      },
+    traefik: {
+      image: 'traefik:2.10',
       restart: 'always',
       ports: [
         '80:80',
         '443:443',
+        '8080:8080',
       ],
-      volumes: DEV ? [
-        `${path.join(__dirname, './images/nginx/nginx.dev.conf')}:/etc/nginx/conf.d/nginx.conf`,
-      ] : [
-        '/etc/letsencrypt:/etc/letsencrypt:ro',
-        '/tmp/letsencrypt/www:/tmp/letsencrypt/www',
-      ]
-    },
-    autoletsencrypt: {
-      build: {
-        dockerfile: path.join(__dirname, 'images/autoletsencrypt/Dockerfile'),
-        context: path.join(__dirname, 'images/autoletsencrypt'),
-      },
-      restart: 'unless-stopped',
-      links: ['nginx'],
       volumes: [
-        '/var/log/letsencrypt:/var/log/letsencrypt',
-        '/var/run/docker.sock:/var/run/docker.sock',
-        '/var/lib/letsencrypt:/var/lib/letsencrypt',
-        '/tmp/letsencrypt/www:/tmp/letsencrypt/www',
-        '/etc/letsencrypt:/etc/letsencrypt',
+        '/var/run/docker.sock:/var/run/docker.sock:ro',
+        '/data/presupplied_website/traefik/letsencrypt:/letsencrypt',
       ],
-      environment: {
-        EMAIL: 't.sergiu@gmail.com',
-        SERVER_CONTAINER_LABEL: 'com.presupplied.nginx=',
-        WEBROOT_PATH: '/tmp/letsencrypt/www',
-        DOMAINS: 'presupplied.com www.presupplied.com app.presupplied.com',
-        CHECK_FREQ: '7',
-      },
+      command: [
+        '--providers.docker=true',
+        '--providers.docker.exposedbydefault=false',
+      ].concat(DEV ? [
+        '--log.level=DEBUG',
+        '--api.insecure=true',
+        '--entrypoints.web.address=:80',
+      ] : [
+        '--entrypoints.websecure.address=:443',
+        '--certificateresolvers.myresolver.acme.tlschallenge=true',
+        '--certificateresolvers.myresolver.acme.email=t.sergiu@gmail.com',
+        '--certificateresolvers.myresolver.acme.storage=/letsencrypt/acme.json',
+      ]),
     },
   }
 };
