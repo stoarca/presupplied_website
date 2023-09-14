@@ -37,26 +37,30 @@ let webUrl = scheme + host;
 let config = {
   version: '3.1',
   services: {
-    web: {
+    ghost_website: {
       build: {
-        dockerfile: path.join(__dirname, 'images/web/Dockerfile'),
-        context: path.join(__dirname, 'images/web'),
+        dockerfile: path.join(__dirname, 'images/ghost_website/Dockerfile'),
+        context: path.join(__dirname, 'images/ghost_website'),
       },
       labels: [
         'traefik.enable=true',
-        `traefik.http.routers.webrouter.rule=Host("${host}")`,
-        'traefik.http.services.webservice.loadbalancer.server.port=2368'
+        `traefik.http.routers.ghostwebsiterouter.rule=Host("${host}")`,
+        'traefik.http.routers.ghostwebsiterouter.entrypoints=web',
+        'traefik.http.services.webservice.loadbalancer.server.port=2368',
       ].concat(DEV ? [
-        'traefik.http.routers.webrouter.entrypoints=web',
       ] : [
-        'traefik.http.routers.webrouter.entrypoints=websecure',
-        'traefik.http.routers.webrouter.tls.certresolver=myresolver',
+        `traefik.http.routers.ghostwebsiterouter-secure.rule=Host("${host}")`,
+        'traefik.http.routers.ghostwebsiterouter-secure.entrypoints=websecure',
+        'traefik.http.routers.ghostwebsiterouter-secure.tls=true',
+        'traefik.http.routers.ghostwebsiterouter-secure.tls.certresolver=myresolver',
+        'traefik.http.middlewares.ghostwebsite-redirect.redirectscheme.scheme=https',
+        'traefik.http.routers.ghostwebsiterouter.middlewares=ghostwebsite-redirect',
       ]),
       restart: 'always',
       volumes: [
-        '/data/presupplied_website/web/ghost/content:/var/lib/ghost/content',
+        '/data/presupplied_website/ghost_website/content:/var/lib/ghost/content',
       ].concat(DEV ? [
-        `${path.join(__dirname, './images/web/themes')}:/themes`,
+        `${path.join(__dirname, './images/ghost_website/themes')}:/themes`,
       ] : []),
       environment: {
         // see https://ghost.org/docs/config/#configuration-options
@@ -97,15 +101,15 @@ let config = {
       command: [
         '--providers.docker=true',
         '--providers.docker.exposedbydefault=false',
+        '--entrypoints.web.address=:80',
       ].concat(DEV ? [
         '--log.level=DEBUG',
         '--api.insecure=true',
-        '--entrypoints.web.address=:80',
       ] : [
         '--entrypoints.websecure.address=:443',
-        '--certificateresolvers.myresolver.acme.tlschallenge=true',
-        '--certificateresolvers.myresolver.acme.email=t.sergiu@gmail.com',
-        '--certificateresolvers.myresolver.acme.storage=/letsencrypt/acme.json',
+        '--certificatesresolvers.myresolver.acme.tlschallenge=true',
+        '--certificatesresolvers.myresolver.acme.email=t.sergiu@gmail.com',
+        '--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json',
       ]),
     },
   }
