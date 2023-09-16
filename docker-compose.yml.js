@@ -37,16 +37,15 @@ let webUrl = scheme + host;
 let config = {
   version: '3.1',
   services: {
-    ghost_website: {
+    pswghost_website: {
       build: {
-        dockerfile: path.join(__dirname, 'images/ghost_website/Dockerfile'),
         context: path.join(__dirname, 'images/ghost_website'),
       },
       labels: [
         'traefik.enable=true',
         `traefik.http.routers.ghostwebsiterouter.rule=Host("${host}")`,
         'traefik.http.routers.ghostwebsiterouter.entrypoints=web',
-        'traefik.http.services.webservice.loadbalancer.server.port=2368',
+        'traefik.http.services.ghostwebsiteservice.loadbalancer.server.port=2368',
       ].concat(DEV ? [
       ] : [
         `traefik.http.routers.ghostwebsiterouter-secure.rule=Host("${host}")`,
@@ -65,7 +64,7 @@ let config = {
       environment: {
         // see https://ghost.org/docs/config/#configuration-options
         database__client: 'mysql',
-        database__connection__host: 'mysql',
+        database__connection__host: 'pswmysql',
         database__connection__user: 'ghostusr',
         database__connection__password: secrets.MYSQL_GHOST_USER_PASSWORD,
         database__connection__database: 'ghost',
@@ -73,7 +72,7 @@ let config = {
         NODE_ENV: DEV ? 'development' : 'production',
       }
     },
-    mysql: {
+    pswmysql: {
       image: 'mysql:8.0',
       restart: 'always',
       volumes: [
@@ -86,33 +85,14 @@ let config = {
         MYSQL_PASSWORD: secrets.MYSQL_GHOST_USER_PASSWORD,
       },
     },
-    traefik: {
-      image: 'traefik:2.10',
-      restart: 'always',
-      ports: [
-        '80:80',
-        '443:443',
-        '8080:8080',
-      ],
-      volumes: [
-        '/var/run/docker.sock:/var/run/docker.sock:ro',
-        '/data/presupplied_website/traefik/letsencrypt:/letsencrypt',
-      ],
-      command: [
-        '--providers.docker=true',
-        '--providers.docker.exposedbydefault=false',
-        '--entrypoints.web.address=:80',
-      ].concat(DEV ? [
-        '--log.level=DEBUG',
-        '--api.insecure=true',
-      ] : [
-        '--entrypoints.websecure.address=:443',
-        '--certificatesresolvers.myresolver.acme.tlschallenge=true',
-        '--certificatesresolvers.myresolver.acme.email=t.sergiu@gmail.com',
-        '--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json',
-      ]),
+  },
+  networks: {
+    default: {
+      // HACK: to get it working with the traefik instance from the presupplied
+      // repo
+      name: 'presupplied',
     },
-  }
+  },
 };
 
 console.log(JSON.stringify(config, undefined, 2));
